@@ -1,0 +1,30 @@
+endpoints for login and register a customer:
+
+    http://localhost:8080/api/auth/login
+        request body:{
+            String email
+            String password
+        }
+
+        response body:{
+            String name
+            String email
+            String token
+        }
+
+    http://localhost:8080/api/auth/signup/customer
+        request body:{
+            String name
+            String email
+            String phone
+            String password
+        }
+
+        response body:{
+            Long userId
+            String name
+            String email
+        }
+
+
+r

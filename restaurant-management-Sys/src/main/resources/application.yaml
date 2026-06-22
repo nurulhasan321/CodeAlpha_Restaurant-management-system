@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: restaurant-management-Sys
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/restaurant_db
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+     hibernate:
+       ddl-auto: update
+     show-sql: true
+     properties:
+       hibernate:
+         format-sql: true
+
+jwt:
+  secret: hdgftdjhbkijyuyt765765hfgytr6535rtdyrte654eyut6754
+  expiration: 600000
+
+server:
+  port: 8080
+
+
+
+
