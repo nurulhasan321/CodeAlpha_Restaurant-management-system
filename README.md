@@ -2,6 +2,8 @@
 
 A production-ready full-stack application built with Spring Boot and React, deployed natively on an Ubuntu EC2 instance using Systemd and NGINX.
 
+Live http://13.204.232.249/
+
 ## Architecture
 
 This project strictly adheres to standard Linux deployment architecture:
