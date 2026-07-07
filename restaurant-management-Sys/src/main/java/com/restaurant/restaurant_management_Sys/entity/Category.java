@@ -1,6 +1,5 @@
 package com.restaurant.restaurant_management_Sys.entity;
 
-
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
@@ -28,22 +27,13 @@ public class Category extends BaseEntity{
     @Column(length = 500)
     private String description;
 
+    @Column(nullable = false)
+    private String status;
 
-    @OneToMany(mappedBy = "category")
+    @OneToMany(mappedBy = "category",
+            orphanRemoval = true,
+            cascade = CascadeType.ALL)
     private Set<MenuItem> menuItems = new HashSet<> ();
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -6,7 +6,9 @@ import com.restaurant.restaurant_management_Sys.entity.RestaurantTable;
 import com.restaurant.restaurant_management_Sys.repository.RestaurantTableRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
+
+import com.restaurant.restaurant_management_Sys.entity.Reservation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -14,11 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RestaurantTableService {
 
-
     private final RestaurantTableRepository restaurantTableRepo ;
-
-
-
 
     public String addTable(RestaurantTableReq request){
 
@@ -36,33 +34,25 @@ public class RestaurantTableService {
         return "Table "+request.tableNumber ()+" was added successfully";
     }
 
-
-
-
+    @Transactional(readOnly = true)
     public List<RestaurantTableRes> getAllTables(){
         List<RestaurantTable> tables = restaurantTableRepo.findAll ();
         return tables.stream ()
-                .map (table -> new RestaurantTableRes (
-                        table.getId (),
-                        table.getTableNumber (),
-                        table.getCapacity (),
-                        table.getStatus (),
-                        table.getLocation ()
-                )).toList ();
+                .map (this::mapToRes).toList ();
     }
-
-
 
     public String deleteTable(Long id){
 
         RestaurantTable restaurantTable = restaurantTableRepo.findById (id)
                 .orElseThrow (()->new RuntimeException ("Table not found!"));
+                
         restaurantTableRepo.delete (restaurantTable);
 
-        return restaurantTable.getTableNumber ()+" was successfully deleted!";
+        return "Table was successfully deleted!";
 
     }
 
+    @Transactional
     public RestaurantTableRes updateTable(Long id, RestaurantTableReq request){
 
         if(restaurantTableRepo.existsByTableNumberAndIdNot (request.tableNumber (),id)){
@@ -71,8 +61,6 @@ public class RestaurantTableService {
         RestaurantTable restaurantTable = restaurantTableRepo.findById (id)
                 .orElseThrow (()->new RuntimeException ("Table not found"));
 
-
-
         restaurantTable.setTableNumber (request.tableNumber ());
         restaurantTable.setCapacity (request.capacity ());
         restaurantTable.setStatus (request.status ());
@@ -80,15 +68,43 @@ public class RestaurantTableService {
 
         RestaurantTable updatedTable = restaurantTableRepo.save (restaurantTable);
 
-        return new RestaurantTableRes (
-                updatedTable.getId (),
-                updatedTable.getTableNumber (),
-                updatedTable.getCapacity (),
-                updatedTable.getStatus (),
-                updatedTable.getLocation ()
-        );
+        return mapToRes(updatedTable);
     }
 
+    private RestaurantTableRes mapToRes(RestaurantTable table) {
+        String reservedBy = null;
+        String reservedEmail = null;
+        String reservedPhone = null;
 
+        if ("RESERVED".equalsIgnoreCase(table.getStatus())) {
+            if (table.getReservations() != null) {
+                for (Reservation r : table.getReservations()) {
+                    if ("PENDING".equalsIgnoreCase(r.getStatus()) || "CONFIRMED".equalsIgnoreCase(r.getStatus())) {
+                        if (r.getUser() != null) {
+                            reservedBy = r.getUser().getName();
+                            reservedEmail = r.getUser().getEmail();
+                            reservedPhone = r.getUser().getPhone();
+                        } else {
+                            reservedBy = "Guest";
+                            reservedEmail = "N/A";
+                            reservedPhone = "N/A";
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        return new RestaurantTableRes (
+                table.getId (),
+                table.getTableNumber (),
+                table.getCapacity (),
+                table.getStatus (),
+                table.getLocation (),
+                reservedBy,
+                reservedEmail,
+                reservedPhone
+        );
+    }
 
 }

@@ -16,19 +16,23 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final com.restaurant.restaurant_management_Sys.security.RateLimitingFilter rateLimitingFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 
     @Bean
     public AuthenticationManager authenticationManager(
@@ -38,116 +42,218 @@ public class SecurityConfig {
         return configuration.getAuthenticationManager();
     }
 
-
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http) throws Exception {
 
-
         http
 
-                // Disable CSRF because JWT is stateless
+                
                 .csrf(csrf -> csrf.disable())
 
-
-                // Enable CORS using CorsConfigurationSource bean
+                
                 .cors(Customizer.withDefaults())
 
-
-                // No session
+                
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
                         )
                 )
 
-
-                // Debug security errors
+                
                 .exceptionHandling(exception -> exception
 
                         .authenticationEntryPoint(
                                 (request, response, authException) -> {
 
-                                    System.out.println(
-                                            "AUTHENTICATION FAILED: "
-                                                    + request.getRequestURI()
-                                                    + " | "
-                                                    + authException.getMessage()
+                                    log.warn(
+                                            "AUTHENTICATION FAILED: {} | {}",
+                                            request.getRequestURI(),
+                                            authException.getMessage()
                                     );
 
                                     response.setStatus(401);
+                                    response.setContentType("application/json");
                                     response.getWriter()
-                                            .write("Unauthorized");
+                                            .write("{\"message\":\"Unauthorized\"}");
                                 }
                         )
 
                         .accessDeniedHandler(
                                 (request, response, deniedException) -> {
 
-                                    System.out.println(
-                                            "ACCESS DENIED: "
-                                                    + request.getRequestURI()
-                                                    + " | "
-                                                    + deniedException.getMessage()
+                                    log.warn(
+                                            "ACCESS DENIED: {} | {}",
+                                            request.getRequestURI(),
+                                            deniedException.getMessage()
                                     );
 
                                     response.setStatus(403);
+                                    response.setContentType("application/json");
                                     response.getWriter()
-                                            .write("Forbidden");
+                                            .write("{\"message\":\"Forbidden\"}");
                                 }
                         )
                 )
 
-
                 .authorizeHttpRequests(auth -> auth
 
-
-                        // Allow browser preflight request
+                        
                         .requestMatchers(
                                 HttpMethod.OPTIONS,
                                 "/**"
                         )
                         .permitAll()
 
-
-                        // Authentication APIs
+                        
                         .requestMatchers(
-                                "/api/auth/**"
+                                "/api/auth/login",
+                                "/api/auth/signup/customer",
+                                "/api/auth/refresh",
+                                "/api/auth/logout",
+                                "/api/auth/forgot-password",
+                                "/api/auth/reset-password",
+                                "/api/auth/verify-email"
                         )
                         .permitAll()
 
-
-                        // Admin APIs
+                        
                         .requestMatchers(
-                                "/api/admin/**"
+                                "/api/auth/signup/admin"
                         )
                         .hasRole("ADMIN")
 
+                        
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/menu",
+                                "/api/menu/**",
+                                "/api/category",
+                                "/api/category/**",
+                                "/api/table",
+                                "/api/table/**",
+                                "/api/orders/stream",
+                                "/uploads/**",
+                                "/api/settings"
+                        )
+                        .permitAll()
 
-                        // Customer APIs
+                        
                         .requestMatchers(
                                 "/api/user/**"
                         )
                         .hasAnyRole(
-                                "CUSTOMER","ADMIN"
+                                "CUSTOMER", "ADMIN"
                         )
 
-                        .requestMatchers ("/api/restaurant-table/**")
-                        .hasAnyRole ("ADMIN")
+                        .requestMatchers(
+                                "/api/addresses/**",
+                                "/api/reviews/**",
+                                "/api/users/me/**"
+                        )
+                        .hasAnyRole("CUSTOMER", "ADMIN")
 
+                        .requestMatchers(
+                                "/api/orders/my-orders",
+                                "/api/orders/add",
+                                "/api/reservations/my-reservations",
+                                "/api/reservations/add"
+                        )
+                        .hasAnyRole("CUSTOMER", "ADMIN")
 
-                        // Everything else needs JWT
+                        
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/orders/*/status"
+                        )
+                        .hasAnyRole("CUSTOMER", "ADMIN", "STAFF")
+
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/reservations/*/status"
+                        )
+                        .hasAnyRole("ADMIN", "STAFF")
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/reservations/*"
+                        )
+                        .hasAnyRole("CUSTOMER", "ADMIN")
+
+                        
+                        .requestMatchers(
+                                "/api/inventory",
+                                "/api/inventory/**",
+                                "/api/upload",
+                                "/api/upload/**",
+                                "/api/customers",
+                                "/api/customers/**",
+                                "/api/analytics/dashboard"
+                        )
+                        .hasAnyRole("ADMIN", "STAFF")
+
+                        
+                        .requestMatchers(
+                                "/api/staff",
+                                "/api/staff/**",
+                                "/api/analytics/**"
+                        )
+                        .hasAnyRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/settings/restaurant",
+                                "/api/settings/notifications"
+                        )
+                        .hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/category/add",
+                                "/api/menu/add",
+                                "/api/table/add"
+                        )
+                        .hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/category/**",
+                                "/api/menu/**",
+                                "/api/table/**"
+                        )
+                        .hasRole("ADMIN")
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/category/**",
+                                "/api/menu/**",
+                                "/api/table/**"
+                        )
+                        .hasRole("ADMIN")
+
+                        
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/orders",
+                                "/api/reservations"
+                        )
+                        .hasAnyRole("ADMIN", "STAFF")
+
+                        
                         .anyRequest()
                         .authenticated()
                 )
 
-
-                // JWT filter
+                
+                .addFilterBefore(
+                        rateLimitingFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                )
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
                 );
-
 
         return http.build();
     }

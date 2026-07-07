@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #e63946;
+  --color-primary-hover: #d62828;
+  --color-secondary: #f1faee;
+  --color-accent: #a8dadc;
+  --color-dark: #1d3557;
+  --color-dark-light: #457b9d;
+
+  --font-sans: 'Inter', 'Roboto', 'Helvetica Neue', sans-serif;
+
+  --animate-fade-in-up: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-shimmer: shimmer 2s linear infinite;
+
+  @keyframes fade-in-up {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes shimmer {
+    100% { transform: translateX(100%); }
+  }
+}
+
+/* Base styles and custom scrollbar */
+@layer base {
+  html, body {
+    @apply antialiased text-gray-900 bg-gray-50;
+    scroll-behavior: smooth;
+  }
+
+  body.dark {
+    @apply text-gray-100 bg-gray-900;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-gray-700;
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-600;
+  }
+}
+
+/* Micro animations and utility classes */
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/20;
+  }
+  .dark .glass {
+    @apply bg-gray-900/70 border-gray-700/50;
+  }
+  
+  .hover-lift {
+    @apply transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg;
+  }
+}

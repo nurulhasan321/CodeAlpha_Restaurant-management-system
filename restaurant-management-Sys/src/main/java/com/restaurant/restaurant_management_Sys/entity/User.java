@@ -26,7 +26,6 @@ public class User extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String email;
 
-
     @Column(nullable = false)
     private String phone;
 
@@ -37,7 +36,13 @@ public class User extends BaseEntity {
     @Builder.Default
     private Boolean active = true;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Double walletBalance = 0.0;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean emailVerified = true;
 
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)

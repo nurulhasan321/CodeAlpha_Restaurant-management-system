@@ -32,29 +32,15 @@ public class OrderItem extends BaseEntity {
     private Double subtotal;
 
     @Column
-    @NotBlank
     private String specialNote;
-
 
     @ManyToOne
     @JoinColumn(name = "order_id")
     private Order order;
-
 
     @ManyToOne
     @JoinColumn(name = "menu_item_id")
     private MenuItem menuItem;
 
 }
-
-
-
-
-
-
-
-
-
-
-
 

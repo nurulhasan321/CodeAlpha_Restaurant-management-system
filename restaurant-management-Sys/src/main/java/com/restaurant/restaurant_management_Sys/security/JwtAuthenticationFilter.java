@@ -18,19 +18,14 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
 
     @Autowired
     private JwtUtil jwtUtil;
 
-
     @Autowired
     private CustomUserDetailsService userDetailsService;
-
-
 
     @Override
     protected void doFilterInternal(
@@ -39,13 +34,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @Nonnull FilterChain filterChain)
             throws ServletException, IOException {
 
-
         String token = null;
 
-
-        // 1. Check Authorization header
+        
         String authHeader = request.getHeader("Authorization");
-
 
         if(authHeader != null &&
                 authHeader.startsWith("Bearer ")) {
@@ -54,8 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         }
 
-
-        // 2. Check Cookie
+        
         if(token == null && request.getCookies() != null){
 
             for(Cookie cookie : request.getCookies()){
@@ -68,35 +59,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-
-
         if(token == null){
 
             filterChain.doFilter(request,response);
             return;
         }
 
-
-
         try {
 
-
             String email = jwtUtil.extractEmail(token);
-
 
             if(email != null &&
                     SecurityContextHolder.getContext()
                             .getAuthentication() == null){
 
-
                 UserDetails userDetails =
                         userDetailsService
                                 .loadUserByUsername(email);
 
-
-
-                if(jwtUtil.validateToken(token,email)){
-
+                if(jwtUtil.validateToken(token)){
 
                     UsernamePasswordAuthenticationToken auth =
                             new UsernamePasswordAuthenticationToken(
@@ -105,19 +86,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     userDetails.getAuthorities()
                             );
 
-
                     auth.setDetails(
                             new WebAuthenticationDetailsSource()
                                     .buildDetails(request)
                     );
-
 
                     SecurityContextHolder
                             .getContext()
                             .setAuthentication(auth);
                 }
             }
-
 
         }catch(Exception e){
 
@@ -126,8 +104,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             );
 
         }
-
-
 
         filterChain.doFilter(request,response);
 

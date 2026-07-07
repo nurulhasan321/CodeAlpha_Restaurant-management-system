@@ -8,14 +8,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/restaurant-table")
+@RequestMapping("/api/table")
 @RequiredArgsConstructor
 public class RestaurantTableController {
-
 
     private final RestaurantTableService restaurantTableService;
 
@@ -24,7 +22,7 @@ public class RestaurantTableController {
         return ResponseEntity.ok (restaurantTableService.getAllTables ());
     }
 
-    @PostMapping("/add-table")
+    @PostMapping("/add")
     public ResponseEntity<String> addTable(@RequestBody RestaurantTableReq req){
         return ResponseEntity.ok (restaurantTableService.addTable (req));
     }
@@ -34,7 +32,7 @@ public class RestaurantTableController {
         return ResponseEntity.ok (restaurantTableService.updateTable (id,request));
     }
 
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteTable(@PathVariable Long id){
         return ResponseEntity.ok (restaurantTableService.deleteTable (id));
     }

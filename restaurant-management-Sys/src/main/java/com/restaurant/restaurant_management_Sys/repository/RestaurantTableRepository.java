@@ -7,10 +7,12 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface RestaurantTableRepository extends JpaRepository<RestaurantTable,Long> {
+public interface RestaurantTableRepository extends JpaRepository<RestaurantTable, Long> {
 
     boolean existsByTableNumber(String tableNumber);
 
-    boolean existsByTableNumberAndIdNot(String tableNumber,Long id);
+    boolean existsByTableNumberAndIdNot(String tableNumber, Long id);
 
+    
+    long countByStatusIgnoreCase(String status);
 }

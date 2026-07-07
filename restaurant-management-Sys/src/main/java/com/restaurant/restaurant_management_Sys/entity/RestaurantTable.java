@@ -1,6 +1,5 @@
 package com.restaurant.restaurant_management_Sys.entity;
 
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -37,16 +36,10 @@ public class RestaurantTable extends BaseEntity{
     @Column(nullable = false)
     private String status;
 
-
-//    one to many with orders
     @OneToMany(mappedBy = "restaurantTable", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Order> orders = new HashSet<> ();
 
-//    one to many with reservations
     @OneToMany(mappedBy = "restaurantTable", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Reservation> reservations = new HashSet<> ();
-
-
-
 
 }

@@ -4,6 +4,7 @@ import com.restaurant.restaurant_management_Sys.dto.request.LoginReq;
 import com.restaurant.restaurant_management_Sys.dto.response.LoginRes;
 import com.restaurant.restaurant_management_Sys.dto.request.SignupReq;
 import com.restaurant.restaurant_management_Sys.dto.response.SignupRes;
+import com.restaurant.restaurant_management_Sys.dto.response.TokenResponse;
 import com.restaurant.restaurant_management_Sys.entity.Role;
 import com.restaurant.restaurant_management_Sys.entity.User;
 
@@ -17,14 +18,10 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-
 
     private final UserRepository userRepo;
 
@@ -36,7 +33,7 @@ public class AuthService {
 
     private final AuthenticationManager authenticationManager;
 
-    public LoginRes login(LoginReq request){
+    public TokenResponse login(LoginReq request){
 
         authenticationManager.authenticate (
                 new UsernamePasswordAuthenticationToken (
@@ -49,27 +46,30 @@ public class AuthService {
                 .orElseThrow (()-> new
                         UserNotFoundException ("User Not Found"));
 
+        String accessToken = jwtUtil.generateAccessToken (user.getEmail ());
+        String refreshToken = jwtUtil.generateRefreshToken (user.getEmail ());
 
-
-        String token = jwtUtil.generateToken (user.getEmail ());
-
-        return new LoginRes (
+        return new TokenResponse (
                 user.getName (),
                 user.getEmail (),
                 user.getRole ().getName (),
-                token
+                accessToken,
+                refreshToken
         );
     }
-
 
     public SignupRes signupCustomer(SignupReq signupReq){
 
         if(userRepo.existsByEmail (signupReq.email ())){
-            throw new UserNotFoundException ("User Already Registered!");
+            throw new UserAlreadyExistsException ("User Already Registered!");
         }
 
-        Role customerRole = roleRepo.findByName ("CUSTOMER")
-                .orElseThrow (() -> new RuntimeException ("Role not found"));
+        Role customerRole = roleRepo.findByName("CUSTOMER")
+                .orElseGet(() -> {
+                    Role r = new Role();
+                    r.setName("CUSTOMER");
+                    return roleRepo.save(r);
+                });
 
         String encodedPass = passwordEncoder.encode (signupReq.password ());
 
@@ -88,17 +88,18 @@ public class AuthService {
         );
     }
 
-
-
-
     public SignupRes signupAdmin(SignupReq request){
 
         if(userRepo.existsByEmail (request.email ())){
             throw new UserAlreadyExistsException ("User already registered");
         }
 
-        Role adminRole = roleRepo.findByName ("ADMIN")
-                .orElseThrow (()-> new RuntimeException ("Role not found"));
+        Role adminRole = roleRepo.findByName("ADMIN")
+                .orElseGet(() -> {
+                    Role r = new Role();
+                    r.setName("ADMIN");
+                    return roleRepo.save(r);
+                });
 
         String hashedPass = passwordEncoder.encode (request.password ());
         User savedUser = userRepo.save (User.builder ()
@@ -116,13 +117,29 @@ public class AuthService {
         );
     }
 
+    public String refreshToken(String refreshToken) {
+        if (jwtUtil.validateToken(refreshToken)) {
+            String email = jwtUtil.extractEmail(refreshToken);
+            return jwtUtil.generateAccessToken(email);
+        } else {
+            throw new RuntimeException("Invalid refresh token");
+        }
+    }
 
+    public LoginRes getCurrentUser(String email) {
+        User user = userRepo.findByEmail(email).orElseThrow(() -> new UserNotFoundException("User not found"));
+        return new LoginRes(
+            user.getName(),
+            user.getEmail(),
+            user.getRole().getName()
+        );
+    }
 
+    public void resetPasswordDirectly(String email, String newPassword) {
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepo.save(user);
+    }
 }
-
-
-
-
-
-
-

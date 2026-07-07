@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
-import org.hibernate.bytecode.enhance.spi.interceptor.AbstractLazyLoadInterceptor;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -20,7 +19,6 @@ import java.util.Set;
 @Builder
 public class MenuItem extends BaseEntity{
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -29,6 +27,7 @@ public class MenuItem extends BaseEntity{
     @Column(nullable = false, unique = true, length = 100)
     private String name;
 
+    @NotBlank
     @Column(length = 500)
     private String description;
 
@@ -37,12 +36,16 @@ public class MenuItem extends BaseEntity{
     @Column(nullable = false)
     private Double price;
 
+    @NotBlank
+    @Column(name = "availability", nullable = false)
+    private String available;
+
+    @Column(name = "image_url", length = 1000)
+    private String imageUrl;
+
+    @Column(name = "active", nullable = false)
     @Builder.Default
-    @Column
-    private Boolean available = true;
-
-
-
+    private Boolean active = true;
 
     @OneToMany(mappedBy = "menuItem", orphanRemoval = true, cascade = CascadeType.ALL)
     private Set<OrderItem> orderItems = new HashSet<> ();
@@ -50,4 +53,8 @@ public class MenuItem extends BaseEntity{
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category ;
+
+    @OneToMany(mappedBy = "menuItem", orphanRemoval = true, cascade = CascadeType.ALL)
+    @Builder.Default
+    private Set<RecipeIngredient> recipeIngredients = new HashSet<>();
 }
